@@ -6,3 +6,9 @@
    2. Run using `docker run --publish=5433:5432 minus34/gnafloader:latest`.
 3. Ensure the data is correct in `test.txt`.
 4. Run project with `poetry run python main.py`.
+
+# Potential Improvements
+
+- Optimise the database.
+  - Can cut out a lot of irrelevant data.
+  - Perhaps have tables for each state, then properly index.
