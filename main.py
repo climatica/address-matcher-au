@@ -96,7 +96,7 @@ def main(filename="test.txt"):
     bad_addrs = []
     completed = 0
     last_report = 0
-    report_thres_percent = 5
+    report_thres_percent = .01
     report_thres = math.floor(report_thres_percent * len(addrs) / 100)
     for addr in addrs:
         cursor = conn.cursor()
@@ -126,9 +126,9 @@ def main(filename="test.txt"):
             bad_addrs.append(addr)
         cursor.close()
         completed += 1
-        if(completed - last_report > report_thres):
-            print(f"Completed {math.floor(100 * completed / float(len(addrs)))}% - (success + fail = total : {len(good_addrs)} + {len(bad_addrs)} = {completed})")
-            last_report = completed
+        # if(completed - last_report > report_thres):
+        print(f"Completed {math.floor(100 * completed / float(len(addrs)))}% - (success + fail = total : {len(good_addrs)} + {len(bad_addrs)} = {completed})")
+            # last_report = completed
 
     print("Geocoding finished!")
     print(f"Total success rate: {100 * len(good_addrs) / float(len(addrs))}%")
