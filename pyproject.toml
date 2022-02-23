@@ -7,8 +7,8 @@ version = "0.1.0"
 [tool.poetry.dependencies]
 address-net = {git = "https://github.com/Aretle/address-net.git"}
 psycopg2 = "^2.9.3"
-python = "^3.8"
-tensorflow = "2.5"
+python = "~3.9"
+tensorflow = "~2.8"
 
 [tool.poetry.dev-dependencies]
 
