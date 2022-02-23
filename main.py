@@ -1,3 +1,4 @@
+import sys
 from addressnet.predict import predict
 import psycopg2
 
@@ -14,8 +15,8 @@ STATES = {
 }
 
 
-def main():
-    with open("test.txt") as f:
+def main(filename="test.txt"):
+    with open(filename) as f:
         a = []
         for line in f:
             a.append(line)
@@ -69,4 +70,9 @@ def main():
     print("Bad addresses: ", bad_addrs)
 
 if __name__ == "__main__":
-    main()
+    if(len(sys.argv) < 2):
+        print("     -Usage : poetry run python main.py <filename.txt/.csv>")
+        exit()
+
+    filename = sys.argv[1]
+    main(filename)
