@@ -128,6 +128,7 @@ def main(filename="test.txt"):
         completed += 1
         if(completed - last_report > report_thres):
             print(f"Completed {math.floor(100 * completed / float(len(addrs)))}% - (success + fail = total : {len(good_addrs)} + {len(bad_addrs)} = {completed})")
+            last_report = completed
 
     print("Geocoding finished!")
     print(f"Total success rate: {100 * len(good_addrs) / float(len(addrs))}%")
