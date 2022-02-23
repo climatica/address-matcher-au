@@ -87,7 +87,7 @@ def save_results(table:pd.DataFrame, out_loc:str):
     table.to_csv(outtable,index=False)
     # SAVE REQUEST for sending to ZKE Client app
     outgnaf = out_loc + ".xdi.request"
-    table["GNAFPID"].where(table["GNAFPID"].apply(len) > 0).to_csv(outgnaf,index=False)
+    table["GNAFPID"][table["GNAFPID"].apply(len) > 0].to_csv(outgnaf,index=False)
 
     #TODO: save bad addresses
     return outtable,outgnaf
