@@ -1,4 +1,5 @@
 
+import math
 import sys
 from addressnet.predict import predict
 from numpy import SHIFT_UNDERFLOW
@@ -39,6 +40,7 @@ def get_query(d):
         + entry(d["LOCALITY"],suffix=', ')
         + entry(d["STATE_ABBREVIATION"],suffix=', ')
         + entry(d["POSTCODE"])
+        # We only handle australia for now, so omit AU
         # + entry(d["COUNTRY"],prefix=', ')
     )
 
@@ -82,10 +84,6 @@ def main(filename="test.txt"):
     addrs = (format_blob_addresses(filename) if Path(filename).suffix == ".txt" 
         else format_structured_address(filename))
     
-    print("Formatted addresses:")
-    for a in addrs:
-        print(a)
-    
     conn = psycopg2.connect(
         host="localhost",
         port=5433,
@@ -93,8 +91,13 @@ def main(filename="test.txt"):
         password="password"
     )
 
+    print("Geocoding formatted addresses...")
     good_addrs = []
     bad_addrs = []
+    completed = 0
+    last_report = 0
+    report_thres_percent = 5
+    report_thres = math.floor(report_thres_percent * len(addrs) / 100)
     for addr in addrs:
         cursor = conn.cursor()
         try:
@@ -114,17 +117,23 @@ def main(filename="test.txt"):
                     }
                 }
                 good_addrs.append(formatted_data)
-                print(formatted_data)
+                # print(formatted_data)
             else:
                 bad_addrs.append(addr)
-                print("Bad address")
+                # print("Bad address")
 
         except:
             bad_addrs.append(addr)
         cursor.close()
+        completed += 1
+        if(completed - last_report > report_thres):
+            print(f"Completed {math.floor(100 * completed / float(len(addrs)))}% - (success + fail = total : {len(good_addrs)} + {len(bad_addrs)} = {completed})")
 
-    print("Bad addresses: ", bad_addrs)
-    print("Total success rate: ", len(good_addrs) / float(len(addrs)))
+    print("Geocoding finished!")
+    print(f"Total success rate: {100 * len(good_addrs) / float(len(addrs))}%")
+
+    
+    print(f"Saved failed addresses to ")
 
 
 if __name__ == "__main__":
