@@ -1,8 +1,11 @@
 
+from distutils.dep_util import newer
 import math
+import os
 import sys
 from addressnet.predict import predict
-from numpy import SHIFT_UNDERFLOW
+from black import out
+from numpy import SHIFT_UNDERFLOW, result_type
 import psycopg2
 from pathlib import Path
 import pandas as pd
@@ -78,6 +81,18 @@ def format_structured_address(filename):
 
     return format_addr_list(queries)
 
+def save_results(table:pd.DataFrame, out_loc:str):
+    # OUTTABLE with GNAFS, ROW numbers and addresses for reference
+    outtable = out_loc + "_results.csv"
+    table.to_csv(outtable,index=False)
+    # SAVE REQUEST for sending to ZKE Client app
+    outgnaf = out_loc + ".xdi.request"
+    table["GNAFPID"].where(table["GNAFPID"].apply(len) > 0).to_csv(outgnaf,index=False)
+
+    #TODO: save bad addresses
+    return outtable,outgnaf
+
+outcols = ["GNAFPID","SOURCE_LINE_NUMBER","GNAF_QUERY"]
 
 def main(filename="test.txt"):
 
@@ -91,6 +106,8 @@ def main(filename="test.txt"):
         password="password"
     )
 
+    result_table = []
+
     print("Geocoding formatted addresses...")
     good_addrs = []
     bad_addrs = []
@@ -100,11 +117,11 @@ def main(filename="test.txt"):
     report_thres = math.floor(report_thres_percent * len(addrs) / 100)
     for addr in addrs:
         cursor = conn.cursor()
+        formatted_data = None
         try:
             cursor.execute(SELECT_STMT, addr)
 
             data = cursor.fetchone()
-
             if data:
                 formatted_data = {
                     "id": data[0],
@@ -117,14 +134,20 @@ def main(filename="test.txt"):
                     }
                 }
                 good_addrs.append(formatted_data)
-                # print(formatted_data)
             else:
                 bad_addrs.append(addr)
-                # print("Bad address")
+                
 
-        except:
+        except KeyError as e:
+            print(f"Key error - could not search for {e} for address {addr}")
+            print("TODO: collate warnings into result table")
             bad_addrs.append(addr)
+
         cursor.close()
+        
+        # Add new result to table
+        result_table.append([formatted_data["id"] if formatted_data is not None else "",completed,addr])
+
         completed += 1
         # if(completed - last_report > report_thres):
         print(f"Completed {math.floor(100 * completed / float(len(addrs)))}% - (success + fail = total : {len(good_addrs)} + {len(bad_addrs)} = {completed})")
@@ -133,8 +156,11 @@ def main(filename="test.txt"):
     print("Geocoding finished!")
     print(f"Total success rate: {100 * len(good_addrs) / float(len(addrs))}%")
 
-    
-    print(f"Saved failed addresses to ")
+    if not os.path.isdir("results"):
+        os.mkdir("results")
+    result_df = pd.DataFrame(result_table,columns=outcols)
+    outfiles = save_results(result_df,"results/" + str(Path(filename).stem))
+    print(f"Saved results to {outfiles}")
 
 
 if __name__ == "__main__":
