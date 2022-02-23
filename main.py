@@ -1,6 +1,7 @@
-from ctypes import FormatError
+
 import sys
 from addressnet.predict import predict
+from numpy import SHIFT_UNDERFLOW
 import psycopg2
 from pathlib import Path
 import pandas as pd
@@ -17,24 +18,41 @@ STATES = {
     "WESTERN AUSTRALIA": "WA",
 }
 
-sep = ", "
+def entry(data, suffix: str = '', prefix:str = ''):
+    # Nans are empty
+    copy = data.copy()
+    nans = copy == 'nan'
+    copy = prefix + copy.astype(str) + suffix
+    copy[nans] = ''
+    return copy
+
 def get_query(d): 
+
     return (''
-        + d["FLAT_TYPE_CODE"] + sep
-        + d["FLAT_NUMBER"] + sep
-        + d["BUILDING_NAME"] + sep
-        + d["LEVEL_NUMBER"] + sep
-        + d["LEVEL_TYPE_CODE"] + sep
-        + d["NUMBER_FIRST"] + sep
-        + d["NUMBER_LAST"] + sep
-        + d["LOT_NUMBER"] + sep
-        + d["STREET_NAME"] + sep
-        + d["STREET_TYPE_CODE"] + sep
-        + d["LOCALITY"] + sep
-        + d["STATE_ABBREVIATION"] + sep
-        + d["POSTCODE"]
+        + entry(d["LOT_NUMBER"],prefix='LOT ',suffix=', ')
+        + entry(d["FLAT_TYPE_CODE"]," ") + entry(d["FLAT_NUMBER"],", ")
+        + entry(d["LEVEL_NUMBER"]) + entry(d["LEVEL_TYPE_CODE"],", ")
+        + entry(d["BUILDING_NAME"],", ")
+        + entry(d["NUMBER_FIRST"])
+        + entry(d["NUMBER_LAST"],prefix="-")
+        + entry(d["STREET_NAME"],prefix=' ',suffix=' ')
+        + entry(d["STREET_TYPE_CODE"],suffix=', ')
+        + entry(d["LOCALITY"],suffix=', ')
+        + entry(d["STATE_ABBREVIATION"],suffix=', ')
+        + entry(d["POSTCODE"])
+        + entry(d["COUNTRY"],prefix=', ')
     )
 
+def format_addr_list(addr_list):
+    addrs = []
+    completed = 0
+    for addr in predict(addr_list):
+        if addr["state"]:
+            addr["state"] = STATES[addr["state"]]
+        addrs.append(addr)
+        completed += 1
+        print(f"Formatted: {completed}/{len(addr_list)} addresses")
+    return addrs
 
 def format_blob_addresses(filename):
     with open(filename) as f:
@@ -42,34 +60,28 @@ def format_blob_addresses(filename):
         for line in f:
             a.append(line)
 
-        completed = 0
-        addrs = []
-        for addr in predict(a):
-            if addr["state"]:
-                addr["state"] = STATES[addr["state"]]
-            addrs.append(addr)
-            completed += 1
-            print(f"Formatted: {completed}/{len(a)} addresses")
+        addrs = format_addr_list(a)
     return addrs
 
 def format_structured_address(filename):
     ext = Path(filename).suffix 
-    if ext == "csv":
-        data = pd.read_csv(filename)
+    if ext == ".csv":
+        data = pd.read_csv(filename).astype(str)
     else:
-        raise FormatError(f"Address format not supported: {ext}")
+        raise RuntimeError(f"Address format not supported: {ext}")
 
     data["destructured_query"] = get_query(data)
-    print(data)
-    exit()
+    queries = data["destructured_query"].to_list()
 
-    
+    return format_addr_list(queries)
+
 
 def main(filename="test.txt"):
 
-    addrs = (format_blob_addresses(filename) if Path(filename).suffix == "txt" 
+    addrs = (format_blob_addresses(filename) if Path(filename).suffix == ".txt" 
         else format_structured_address(filename))
 
+    print("Formatted addresses:",addrs)
     conn = psycopg2.connect(
         host="localhost",
         port=5433,
