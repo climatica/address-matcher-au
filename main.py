@@ -27,7 +27,6 @@ def entry(data, suffix: str = '', prefix:str = ''):
     return copy
 
 def get_query(d): 
-
     return (''
         + entry(d["LOT_NUMBER"],prefix='LOT ',suffix=', ')
         + entry(d["FLAT_TYPE_CODE"]," ") + entry(d["FLAT_NUMBER"],", ")
@@ -40,18 +39,20 @@ def get_query(d):
         + entry(d["LOCALITY"],suffix=', ')
         + entry(d["STATE_ABBREVIATION"],suffix=', ')
         + entry(d["POSTCODE"])
-        + entry(d["COUNTRY"],prefix=', ')
+        # + entry(d["COUNTRY"],prefix=', ')
     )
 
-def format_addr_list(addr_list):
+def format_addr_list(blobs):
     addrs = []
     completed = 0
-    for addr in predict(addr_list):
+    for addr in predict(blobs):
         if addr["state"]:
             addr["state"] = STATES[addr["state"]]
+        print(f"Formatted: {completed}/{len(blobs)} addresses")
+        print(f"     - {blobs[completed]}")
+        print(f"        => {addr}")
         addrs.append(addr)
         completed += 1
-        print(f"Formatted: {completed}/{len(addr_list)} addresses")
     return addrs
 
 def format_blob_addresses(filename):
@@ -80,8 +81,11 @@ def main(filename="test.txt"):
 
     addrs = (format_blob_addresses(filename) if Path(filename).suffix == ".txt" 
         else format_structured_address(filename))
-
-    print("Formatted addresses:",addrs)
+    
+    print("Formatted addresses:")
+    for a in addrs:
+        print(a)
+    
     conn = psycopg2.connect(
         host="localhost",
         port=5433,
@@ -120,6 +124,7 @@ def main(filename="test.txt"):
         cursor.close()
 
     print("Bad addresses: ", bad_addrs)
+    print("Total success rate: ", len(good_addrs) / float(len(addrs)))
 
 
 if __name__ == "__main__":
