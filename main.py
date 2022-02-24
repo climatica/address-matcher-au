@@ -101,7 +101,7 @@ def main(filename="test.txt"):
     
     conn = psycopg2.connect(
         host="localhost",
-        port=5433,
+        port=5432,
         user="postgres",
         password="password"
     )
