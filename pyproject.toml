@@ -9,6 +9,8 @@ address-net = {git = "https://github.com/Aretle/address-net.git"}
 psycopg2 = "^2.9.3"
 python = "~3.9"
 tensorflow = "~2.8"
+pandas = "^1.4.1"
+ipython = "^8.0.1"
 
 [tool.poetry.dev-dependencies]
 
