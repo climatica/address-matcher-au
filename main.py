@@ -10,7 +10,7 @@ import psycopg2
 from pathlib import Path
 import pandas as pd
 
-SELECT_STMT = "SELECT gnaf_pid, address, postcode, state, latitude, longitude FROM gnaf_202111.addresses WHERE number_first = %(number_first)s AND street_name = %(street_name)s AND locality_name=%(locality_name)s AND postcode=%(postcode)s AND state=%(state)s LIMIT 1"
+SELECT_STMT = "SELECT gnaf_pid, address, postcode, state, latitude, longitude FROM addresses WHERE number_first = %(number_first)s AND street_name = %(street_name)s AND locality_name=%(locality_name)s AND postcode=%(postcode)s AND state=%(state)s LIMIT 1"
 STATES = {
     "AUSTRALIAN CAPITAL TERRITORY": "ACT",
     "NEW SOUTH WALES": "NSW",
