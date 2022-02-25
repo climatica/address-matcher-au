@@ -1,4 +1,4 @@
-FROM debian:bullseye-slim
+FROM --platform=linux/amd64 debian:bullseye-slim
 
 ARG DATA_URL="https://climatica-public.s3.ap-southeast-2.amazonaws.com/address-matching/gnaf_202111_offline.dmp"
 # ARG DATA_URL="https://climatica-public.s3.ap-southeast-2.amazonaws.com/gnaf_offline_test.dmp"
